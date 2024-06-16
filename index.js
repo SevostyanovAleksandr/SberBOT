@@ -18,14 +18,14 @@ bot.on('message', (msg) => {
    // const user_id = '@ENigmaA9';
 
 
-    if (messageArray.length === 2) {
-        const [firstName, lastName] = messageArray;
-        const message = `Данные приняты! Имя: ${firstName} Фамилия: ${lastName}`;; // Замените @username на фактическое имя пользователя
+    if (messageArray.length === 4) {
+        const [firstName, lastName, otchestvo, email] = messageArray;
+        const message = `Данные приняты! ФИО: ${firstName} ${lastName} ${otchestvo} ${email}}`;// Замените @username на фактическое имя пользователя
         bot.sendMessage(chatId , message)
 
 
     } else {
-        bot.sendMessage(chatId, 'Неверный формат! Пожалуйста, введите данные в формате: Имя Фамилия');
+        bot.sendMessage(chatId, 'Неверный формат! Пожалуйста, введите данные в формате ФИО и внешней почты');
     }
 });
 
