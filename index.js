@@ -20,7 +20,7 @@ bot.on('message', (msg) => {
 
     if (messageArray.length === 4) {
         const [firstName, lastName, otchestvo, email] = messageArray;
-        const message = `Данные приняты! ФИО: ${firstName} ${lastName} ${otchestvo} ${email}`;// Замените @username на фактическое имя пользователя
+        const message = `Данные приняты! ФИО: ${firstName} ${lastName} ${otchestvo} Почта: ${email}`;// Замените @username на фактическое имя пользователя
         bot.sendMessage(chatId , message)
 
 
