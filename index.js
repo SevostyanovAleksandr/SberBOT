@@ -104,6 +104,7 @@ bot.on('callback_query', (callbackQuery) => {
     const chatId = message.chat.id;
     const data = callbackQuery.data;
 
+
     if (data.startsWith('tag_')) {
         const tagIndex = parseInt(data.split('_')[1], 10);
 
@@ -133,74 +134,99 @@ bot.on('callback_query', (callbackQuery) => {
             bot.once('message', (msg) => {
                 const price = msg.text;
 
-                bot.sendMessage(chatId, 'Присылай фотографии (не более 7 шткут), затем напиши описание товара и не забудь выбрать теги ниже⬇:', createTag(chatId)).then(() => {
+                bot.sendMessage(chatId, 'Первым сообщением присылай фотографии (не более 7 шткут), вторым напиши описание товара и не забудь выбрать теги ниже⬇:', createTag(chatId)).then(() => {
                    //handleUserMessage(chatId);
                    let description = '';
                    let photos = [];
                    let awaitingResponse = true;
-               
-               
-               
-                   function handleMessage(responseMsg) {
+                   // Обработчик события нажатия на inline-кнопку "Верно"
 
+
+                function handleMessage(responseMsg) {
                     const applyPost = {
                         reply_markup: {
                             inline_keyboard: [
-                                [{ text: 'Верно', callback_data: 'Верно'}, { text: 'Неверно', callback_data: 'Неверно' }]
+                                [{ text: 'Неверно', callback_data: 'Неверно' }]
                             ]
                         }
                     };
-                       if (!awaitingResponse) return;
-                      
-                       if (responseMsg.photo) {
+                
+                    if (!awaitingResponse) return;
+                
+                    if (responseMsg.photo) {
                         photos.push(responseMsg.photo[responseMsg.photo.length - 1].file_id);
-                      
                     }
-                       if (responseMsg.text) {
-                           description = responseMsg.text;
-                           awaitingResponse = false;  
-                           
-                       }
-               
-                       if (!awaitingResponse) {
-                           const tagsString = getSelectedTagsString(chatId);
-               
-                           let mediaGroup = photos.map((photo) => ({
-                               type: 'photo',
-                               media: photo
-                           }));
-               
-                           if (mediaGroup.length || responseMsg.text > 0 ) {
-                               bot.sendMediaGroup(chatId, mediaGroup).then(() => {
-                                   bot.sendMessage(chatId, `Новое объявление от @${responseMsg.from.username}:\nОписание: ${description}\nТеги: ${tagsString} \nЦена: ${price} \nОпция: ${data}`);
-
-                                   bot.sendMessage(chatId, "Верно ли составлено обьявление?",applyPost);
+                
+                    if (responseMsg.text || responseMsg.photo > 2) {
+                                    description = responseMsg.text;
+                                 awaitingResponse = false;  
                                    
-                               });
-                           } else {
-                               bot.sendMessage(chatId, `Новое объявление от @${responseMsg.from.username}:\nОписание: ${description}\nТеги: ${tagsString} \nЦена ${price} \nОпция: ${data}`);
-                           }
-                       } else {
-                           // Продолжаем ожидание сообщений от пользователя
-                           bot.once('message', handleMessage);
-                       }
-                   }
+                                }
+                    if (!awaitingResponse) {
+                        const tagsString = getSelectedTagsString(chatId);
+                
+                        let mediaGroup = photos.map((photo, index) => ({
+                            type: 'photo',
+                            media: photo,
+                            caption: index === 0 ? ` Описание: ${description} \n \nЦена: ${price} \n \nТеги: ${tagsString} \n \nОпция: ${data}  \n \nАвтор: @${responseMsg.from.username}:   ` : ''
+                        }));
+                
+                        if (mediaGroup.length > 0) {
+                            bot.sendMediaGroup(chatId, mediaGroup).then(() => { 
+                               // bot.sendMessage(chatId, "Верно ли составлено объявление?");
+                               bot.sendMessage(chatId, 'Для того чтобы опубликовать ваше объявление, необходимо перейти в раздел меню снизу слева и выбрать "Опубликовать объявление", если не верно составлено объявление, то нажимте на кнопку Неверно',applyPost)
+                                awaitingResponse = false;
+                           
+                            });
+                        } else {
+                            bot.sendMessage(chatId, `Новое объявление от @${responseMsg.from.username}: \nОписание: ${description} \nТеги: ${tagsString} \nЦена: ${price} \nОпция: ${data}`);
+                        }
+                    } else {
+                        // Продолжаем ожидание сообщений от пользователя
+                        bot.once('message', handleMessage);
+                    }
+                }
                
                    // Начинаем ожидание сообщений от пользователя
                    bot.once('message', handleMessage);
-                   
                 });
             });
         });
     }
+
 });
-// Обработка команды /public
+// bot.on('callback_query', async (query) => {
+//     const chatId = query.message.chat.id;
+//     const data1 = query.data;
+
+//     if (data1 === 'Верно') {
+//         // Действия при нажатии кнопки "Верно"
+//         // Например, отправить сообщение подтверждения
+//         bot.sendMessage(chatId, 'Для того чтобы опубликовать ваше объявление, необходимо перейти в раздел меню снизу слева и выбрать "Опубликовать объявление".');
+//     }
+// });
+//Обработка команды /public
 bot.onText(/\/public/, (msg) => {
     const chatId = msg.chat.id;
     // Добавьте здесь логику для обработки команды /public
-    bot.sendMessage(chatId, 'Команда /public была вызвана. Здесь будет ваша логика.');
-});
+     
+        bot.sendMessage(chatId, "Верно ли составлено объявление?");
 
+});
+// // Обработчик команды /public
+// bot.onText(/\/public/, async (msg) => {
+//     const chatId = msg.chat.id;
+
+//     // Отправляем пользователю сообщение "Верно ли составлено объявление?"
+//     bot.sendMessage(chatId, "Верно ли составлено объявление?");
+
+//     // Получаем данные из mediaGroup
+//     const media = getMediaFromGroup(); // Функция для получения данных из mediaGroup
+
+//     // Отправляем полученные данные в канал, где бот администратор
+//     const channelChatId = 'SberaHolkaEKBB';
+//     bot.sendMediaGroup(channelChatId, media);
+// });
 // Обработка сообщений пользователей
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
