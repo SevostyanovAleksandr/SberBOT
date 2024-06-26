@@ -235,8 +235,20 @@ bot.onText(/\/public/, async (msg) => {
     bot.sendMessage(chatId, "Верно ли составлено объявление?", applyPostPublic); // Функция для получения данных из mediaGroup
 
     // Отправляем полученные данные в канал, где бот администратор
-    const channelChatId = '@SberaHolkaEKB';
-    bot.sendMediaGroup(channelChatId, globalMediaData);
+    bot.on('callback_query', async (callbackQuery) => {
+        const chatId = callbackQuery.message.chat.id;
+        const data = callbackQuery.data;
+    
+        if (data === 'send') {
+            // Отправляем полученные данные в канал, где бот администратор
+            const channelChatId = '-1002196162742';
+            bot.sendMediaGroup(channelChatId, globalMediaData);
+            bot.sendMessage(chatId, "Объявление успешно отправлено в канал.");
+        } else if (data === 'edit') {
+            // Логика для редактирования объявления
+            bot.sendMessage(chatId, "Давайте переделаем объявление.");
+        }
+    });
 });
 // Обработка сообщений пользователей
 bot.on('message', (msg) => {
