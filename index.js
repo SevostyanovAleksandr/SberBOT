@@ -13,8 +13,8 @@ const createTag = (chatId) => {
     // Разделяем теги на подмассивы по 3 элемента
         
     const rows = [];
-    for (let i = 0; i < tags.length; i += 3) {
-        rows.push(tags.slice(i, i + 3));
+    for (let i = 0; i < tags.length; i += 4) {
+        rows.push(tags.slice(i, i + 4));
     }
     return {
         reply_markup: {
@@ -32,10 +32,14 @@ function getSelectedTagsString(chatId) {
     const tags = ['Apple', 'Шмотки', 'Ноутбук', 'Фототехника', 'Авто', "Билет", "Детям", 'Животные', 'Мебель', 'Медицина', 'Недвижимость', 'Раритет', 'Ремонт', 'Сертификат', "Спортивное", "Стройка", 'Техника', "Халява", 'Игры и консоль', "Электроника"];
     if (!selectedTags[chatId]) return '';
     
-    return Object.keys(selectedTags[chatId])
+//     return Object.keys(selectedTags[chatId])
+//         .filter(index => selectedTags[chatId][index])
+//         .map(index => tags[index])
+//         .join(' ');
+return Object.keys(selectedTags[chatId])
         .filter(index => selectedTags[chatId][index])
-        .map(index => tags[index])
-        .join(', ');
+        .map(index => `#${tags[index]}`)
+        .join(' ');
 }
 
 bot.onText(/\/start/, (msg) => {
@@ -129,7 +133,7 @@ bot.on('callback_query', (callbackQuery) => {
             bot.once('message', (msg) => {
                 const price = msg.text;
 
-                bot.sendMessage(chatId, 'Присылай описание. Не забудь выбрать теги ниже⬇:', createTag(chatId)).then(() => {
+                bot.sendMessage(chatId, 'Присылай фотографии (не более 7 шткут), затем напиши описание товара и не забудь выбрать теги ниже⬇:', createTag(chatId)).then(() => {
                    //handleUserMessage(chatId);
                    let description = '';
                    let photos = [];
@@ -147,16 +151,15 @@ bot.on('callback_query', (callbackQuery) => {
                         }
                     };
                        if (!awaitingResponse) return;
-               
+                      
+                       if (responseMsg.photo) {
+                        photos.push(responseMsg.photo[responseMsg.photo.length - 1].file_id);
+                      
+                    }
                        if (responseMsg.text) {
                            description = responseMsg.text;
-                           bot.sendMessage (chatId, "Отлично ты добавил описание, теперь отправь фото (не более 10 штук)")
+                           awaitingResponse = false;  
                            
-                       }
-               
-                       if (responseMsg.photo) {
-                           photos.push(responseMsg.photo[responseMsg.photo.length - 1].file_id);
-                           awaitingResponse = false; // Завершаем ожидание после получения текста
                        }
                
                        if (!awaitingResponse) {
@@ -170,6 +173,7 @@ bot.on('callback_query', (callbackQuery) => {
                            if (mediaGroup.length || responseMsg.text > 0 ) {
                                bot.sendMediaGroup(chatId, mediaGroup).then(() => {
                                    bot.sendMessage(chatId, `Новое объявление от @${responseMsg.from.username}:\nОписание: ${description}\nТеги: ${tagsString} \nЦена: ${price} \nОпция: ${data}`);
+
                                    bot.sendMessage(chatId, "Верно ли составлено обьявление?",applyPost);
                                    
                                });
