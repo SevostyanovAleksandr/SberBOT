@@ -2,6 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const token = '7035543762:AAGR1qM7bt73_G4Pd4QZUF-lCGZUAB5xmXA';
 const bot = new TelegramBot(token, { polling: true });
 
+let globalMediaData = [];
 const adminChatId = '@Sevotonya';
 const waitingForInput = new Map();
 let selectedTags = {}; // Хранение состояния выбранных тегов для каждого пользователя
@@ -77,10 +78,12 @@ bot.on('message', (msg) => {
 });
 
 // Обработка команды /help
-bot.onText(/\/help/, (msg) => {
+bot.onText(/\/help/, async (msg) => {
     const chatId = msg.chat.id;
     const helpMessage = 'Привет! Чтобы начать создание объявления - используй кнопку [Новое объявление] или команду /create. \nЯ предложу наполнить объявление текстом или фото. При этом новый текст будет заменять предыдущий, а не дополнять.Также у Телеграм есть ограничение на 10 фото в одном сообщении, поэтому не получится опубликовать объявление с большим количеством фото. \nУдалять фото нельзя, поэтому, если случайно добавлено не то фото, следует начать создание объявления заново. \nЧтобы опубликовать объявление - используй кнопку [Опубликовать] или команду /public. \nПеред публикацией я создам макет объявления и предложу подтвердить публикацию. Если все ок - жми [Да]. \nПомимо этого я пришлю сообщение об успешной публикации с ссылкой на объявление и с кнопкой его удаления. К сожалению, Телеграм не позволяет ботам удалять сообщения старше 48 часов.';
     bot.sendMessage(chatId, helpMessage);
+
+
 });
 
 // Обработка команды /create
@@ -173,6 +176,9 @@ bot.on('callback_query', (callbackQuery) => {
                 
                         if (mediaGroup.length > 0) {
                             bot.sendMediaGroup(chatId, mediaGroup).then(() => { 
+                                // Сохраняем данные из mediaGroup в глобальную переменную
+                                globalMediaData = mediaGroup;
+        
                                // bot.sendMessage(chatId, "Верно ли составлено объявление?");
                                bot.sendMessage(chatId, 'Для того чтобы опубликовать ваше объявление, необходимо перейти в раздел меню снизу слева и выбрать "Опубликовать объявление", если не верно составлено объявление, то нажимте на кнопку Неверно',applyPost)
                                 awaitingResponse = false;
@@ -206,27 +212,32 @@ bot.on('callback_query', (callbackQuery) => {
 //     }
 // });
 //Обработка команды /public
-bot.onText(/\/public/, (msg) => {
-    const chatId = msg.chat.id;
-    // Добавьте здесь логику для обработки команды /public
-     
-        bot.sendMessage(chatId, "Верно ли составлено объявление?");
-
-});
-// // Обработчик команды /public
-// bot.onText(/\/public/, async (msg) => {
+// bot.onText(/\/public/, (msg) => {
 //     const chatId = msg.chat.id;
+//     // Добавьте здесь логику для обработки команды /public
+     
+//         bot.sendMessage(chatId, "Верно ли составлено объявление?");
 
-//     // Отправляем пользователю сообщение "Верно ли составлено объявление?"
-//     bot.sendMessage(chatId, "Верно ли составлено объявление?");
-
-//     // Получаем данные из mediaGroup
-//     const media = getMediaFromGroup(); // Функция для получения данных из mediaGroup
-
-//     // Отправляем полученные данные в канал, где бот администратор
-//     const channelChatId = 'SberaHolkaEKBB';
-//     bot.sendMediaGroup(channelChatId, media);
 // });
+// // Обработчик команды /public
+bot.onText(/\/public/, async (msg) => {
+    const chatId = msg.chat.id;
+    const applyPostPublic = {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: 'Отправляем', callback_data: 'send'}, { text: 'Переделать', callback_data: 'edit'} ]
+            ]
+        }
+    };
+
+    // Отправляем пользователю сообщение "Верно ли составлено объявление?"
+    bot.sendMediaGroup(chatId, globalMediaData);
+    bot.sendMessage(chatId, "Верно ли составлено объявление?", applyPostPublic); // Функция для получения данных из mediaGroup
+
+    // Отправляем полученные данные в канал, где бот администратор
+    const channelChatId = '@SberaHolkaEKB';
+    bot.sendMediaGroup(channelChatId, globalMediaData);
+});
 // Обработка сообщений пользователей
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
