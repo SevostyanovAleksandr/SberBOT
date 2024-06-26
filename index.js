@@ -5,21 +5,31 @@ const bot = new TelegramBot(token, { polling: true });
 const adminChatId = '@Sevotonya';
 const waitingForInput = new Map();
 let selectedTags = {}; // Хранение состояния выбранных тегов для каждого пользователя
+let userSelections = {}; // Хранение выбранных опций для каждого пользователя
 
 const createTag = (chatId) => {
-    const tags = ['Apple', 'Игры и консоль', 'Ноутбук', 'Фототехника', 'Авто', "Билет", "Детям", 'Животные', 'Мебель', 'Медицина', 'Недвижимость', 'Раритет', 'Ремонт', 'Сертификат', "Спортивное", "Стройка", 'Техника', "Халява", 'Шмотки', "Электроника"];
+    const tags = ['Apple', 'Шмотки', 'Ноутбук', 'Фототехника', 'Авто', "Билет", "Детям", 'Животные', 'Мебель', 'Медицина', 'Недвижимость', 'Раритет', 'Ремонт', 'Сертификат', "Спортивное", "Стройка", 'Техника', "Халява", 'Игры и консоль', "Электроника"];
+    
+    // Разделяем теги на подмассивы по 3 элемента
+        
+    const rows = [];
+    for (let i = 0; i < tags.length; i += 3) {
+        rows.push(tags.slice(i, i + 3));
+    }
     return {
         reply_markup: {
-            inline_keyboard: tags.map((tag, index) => [{
-                text: selectedTags[chatId] && selectedTags[chatId][index] ? `✅ ${tag}` : tag,
-                callback_data: `tag_${index}`
-            }])
+            inline_keyboard: rows.map(row => row.map(tag => ({
+                text: selectedTags[chatId] && selectedTags[chatId][tags.indexOf(tag)] ? `✅ ${tag}` : tag,
+                callback_data: `tag_${tags.indexOf(tag)}`
+            })))
         }
     };
 };
+
+
 //cпособю получения тегов
 function getSelectedTagsString(chatId) {
-    const tags = ['Apple', 'Игры и консоль', 'Ноутбук', 'Фототехника', 'Авто', "Билет", "Детям", 'Животные', 'Мебель', 'Медицина', 'Недвижимость', 'Раритет', 'Ремонт', 'Сертификат', "Спортивное", "Стройка", 'Техника', "Халява", 'Шмотки', "Электроника"];
+    const tags = ['Apple', 'Шмотки', 'Ноутбук', 'Фототехника', 'Авто', "Билет", "Детям", 'Животные', 'Мебель', 'Медицина', 'Недвижимость', 'Раритет', 'Ремонт', 'Сертификат', "Спортивное", "Стройка", 'Техника', "Халява", 'Игры и консоль', "Электроника"];
     if (!selectedTags[chatId]) return '';
     
     return Object.keys(selectedTags[chatId])
@@ -75,25 +85,12 @@ bot.onText(/\/create/, (msg) => {
     const options = {
         reply_markup: {
             inline_keyboard: [
-                [{
-                    text: 'Куплю/Продам',
-                    callback_data: 'data1'
-                }],
-                [{
-                    text: 'Сдам/Сниму',
-                    callback_data: 'data2'
-                }],
-                [{
-                    text: 'Посто вопросик',
-                    callback_data: 'data3'
-                }],
-                [{
-                    text: 'Отдам бесплатно',
-                    callback_data: 'data4'
-                }]
+                [{ text: 'Куплю/Продам', callback_data: '#Куплю/Продам'}, { text: 'Сдам/Сниму', callback_data: '#Сдам/Сниму' }],
+                [{ text: 'Просто вопросик', callback_data: '#Просто вопросик' }, { text: 'Отдам бесплатно', callback_data: '#Отдам бесплатно' }]
             ]
         }
     };
+
 
     bot.sendMessage(chatId, 'Выберите одну из опций:', options);
 });
@@ -119,22 +116,75 @@ bot.on('callback_query', (callbackQuery) => {
             chat_id: chatId,
             message_id: message.message_id
         });
-    } else {
+        
+    } 
+    // if (data.startsWith('data')) {
+    //     userSelections[chatId] = data; // Запоминаем выбор пользователя
+    //     bot.answerCallbackQuery(callbackQuery.id)
+    // }
+    else {
         // Обработка других callback_data
-        bot.sendMessage(chatId, 'Назови свою цену в рублях:').then(() => {
+        bot.sendMessage(chatId, 'Назови свою цену в рублях🤑 (число):').then(() => {
             // Ожидаем ответ от пользователя
             bot.once('message', (msg) => {
                 const price = msg.text;
 
-                bot.sendMessage(chatId, 'Присылай описание или фотки. Не забудь выбрать теги ниже', createTag(chatId)).then(() => {
-                    // Ожидаем ответ от пользователя
-                    bot.once('message', (msg) => {
-                        const description = msg.text;
-                        const tagsString = getSelectedTagsString(chatId);
-                        
-                        // Здесь можно сохранить цену и описание в базу данных или отправить администратору
-                        bot.sendMessage(chatId, `Новое объявление от @${msg.from.username}:\nЦена: ${price} руб.\nОписание: ${description} Теги: ${tagsString} `);
-                    });
+                bot.sendMessage(chatId, 'Присылай описание. Не забудь выбрать теги ниже⬇:', createTag(chatId)).then(() => {
+                   //handleUserMessage(chatId);
+                   let description = '';
+                   let photos = [];
+                   let awaitingResponse = true;
+               
+               
+               
+                   function handleMessage(responseMsg) {
+
+                    const applyPost = {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{ text: 'Верно', callback_data: 'Верно'}, { text: 'Неверно', callback_data: 'Неверно' }]
+                            ]
+                        }
+                    };
+                       if (!awaitingResponse) return;
+               
+                       if (responseMsg.text) {
+                           description = responseMsg.text;
+                           bot.sendMessage (chatId, "Отлично ты добавил описание, теперь отправь фото (не более 10 штук)")
+                           
+                       }
+               
+                       if (responseMsg.photo) {
+                           photos.push(responseMsg.photo[responseMsg.photo.length - 1].file_id);
+                           awaitingResponse = false; // Завершаем ожидание после получения текста
+                       }
+               
+                       if (!awaitingResponse) {
+                           const tagsString = getSelectedTagsString(chatId);
+               
+                           let mediaGroup = photos.map((photo) => ({
+                               type: 'photo',
+                               media: photo
+                           }));
+               
+                           if (mediaGroup.length || responseMsg.text > 0 ) {
+                               bot.sendMediaGroup(chatId, mediaGroup).then(() => {
+                                   bot.sendMessage(chatId, `Новое объявление от @${responseMsg.from.username}:\nОписание: ${description}\nТеги: ${tagsString} \nЦена: ${price} \nОпция: ${data}`);
+                                   bot.sendMessage(chatId, "Верно ли составлено обьявление?",applyPost);
+                                   
+                               });
+                           } else {
+                               bot.sendMessage(chatId, `Новое объявление от @${responseMsg.from.username}:\nОписание: ${description}\nТеги: ${tagsString} \nЦена ${price} \nОпция: ${data}`);
+                           }
+                       } else {
+                           // Продолжаем ожидание сообщений от пользователя
+                           bot.once('message', handleMessage);
+                       }
+                   }
+               
+                   // Начинаем ожидание сообщений от пользователя
+                   bot.once('message', handleMessage);
+                   
                 });
             });
         });
