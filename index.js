@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const token = '7035543762:AAGR1qM7bt73_G4Pd4QZUF-lCGZUAB5xmXA';
 const bot = new TelegramBot(token, { polling: true });
 
-
+let globalTextnewUser;
 let globalData; 
 let globalMediaData = [];
 const adminChatId = '@Sevotonya';
@@ -10,6 +10,14 @@ const waitingForInput = new Map();
 let selectedTags = {}; // Хранение состояния выбранных тегов для каждого пользователя
 let userSelections = {}; // Хранение выбранных опций для каждого пользователя
 
+//метод отпрвки в канал введенные данные пользователь для апрува
+function approveUser(chatId) {
+    const userData = chatStates[chatId].userData;
+    if (userData) {
+        const channelChatId = '-1002196162742'; // ID вашего канала
+        bot.sendMessage(channelChatId, `Новый сотрудник добавлен: ${userData}`);
+    }
+}
 function confirmAd(chatId) {
     const options = {
         reply_markup: {
@@ -176,15 +184,19 @@ function handleStatefulInput(msg) {
     const text = msg.text;
     const stateData = chatStates[chatId];
 
-    switch(stateData.state) {
-        case 'awaiting_fio_email':
-            if (validateFIOandEmail(text)) {
-                bot.sendMessage(chatId, 'Спасибо, ваши данные приняты!\nОжадайте провереки модератором, когда модератор проверит ваши данные и добавит в частный канал для сотрудников СБЕРа и ДЗО, у вас появится возможность пупликовать объявления.  ');
-                chatStates[chatId].state = null; // Сброс состояния после успешной валидации
-            } else {
-                bot.sendMessage(chatId, 'Пожалуйста, введите корректные ФИО и почту в одном сообщении.');
-            }
-            break;
+    switch(stateData.state) {   
+             case 'awaiting_fio_email':
+                    if (validateFIOandEmail(text)) {
+                        bot.sendMessage(chatId, 'Спасибо, ваши данные приняты!\nОжидайте проверки модератором. Когда модератор проверит ваши данные и добавит вас в частный канал для сотрудников СБЕРа и ДЗО, у вас появится возможность публиковать объявления.');
+                        chatStates[chatId].userData = text;
+                         globalTextnewUser = text;
+                       approveUser(chatId); // Сохраняем данные пользователя
+                        chatStates[chatId].state = null; // Сброс состояния после успешной валидации
+                    } else {
+                        bot.sendMessage(chatId, 'Пожалуйста, введите корректные ФИО и почту в одном сообщении.');
+                    }
+                    break;
+            
             case 'awaiting_tag':
     stateData.state = 'awaiting_description';
     bot.sendMessage(chatId, 'Теперь напишите описание товара или услуги и незабудтье выбрать теги ниже', {
