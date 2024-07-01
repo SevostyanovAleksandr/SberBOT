@@ -98,49 +98,6 @@ const globalState = {
     allSelectedTags: {}
 };
 
-// function handleTagSelection(chatId, tag) {
-//     try {
-//         if (!chatStates[chatId]) {
-//             chatStates[chatId] = { selectedTags: [] };
-//         }
-
-//         // Инициализация массива selectedTags, если он не существует
-//         if (!chatStates[chatId].selectedTags) {
-//             chatStates[chatId].selectedTags = [];
-//         }
-
-//         const selectedTags = chatStates[chatId].selectedTags;
-//         console.log("Текущие выбранные теги:", selectedTags);
-        
-//         // Добавляем хэштег к тегу
-//         const hashtaggedTag = `#${tag}`;
-
-//         const index = selectedTags.indexOf(hashtaggedTag);
-
-//         if (index > -1) {
-//             selectedTags.splice(index, 1); // Удаление тега из списка
-//         } else {
-//             selectedTags.push(hashtaggedTag); // Добавление тега в список
-//         }
-
-//         // Записываем все выбранные теги в глобальный объект
-//         globalState.allSelectedTags[chatId] = [...selectedTags];
-//         console.log("Все выбранные теги для чата", chatId, ":", globalState.allSelectedTags[chatId]);
-
-//         if (chatStates[chatId].message_id) {
-//             bot.editMessageReplyMarkup(createTag(chatId).reply_markup, {
-//                 chat_id: chatId,
-//                 message_id: chatStates[chatId].message_id
-//             }).catch(error => {
-//                 console.error('Ошибка при обновлении сообщения:', error);
-//             });
-//         } else {
-//             console.error('message_id не установлен для чата:', chatId);
-//         }
-//     } catch (error) {
-//         console.error('Произошла ошибка в handleTagSelection:', error);
-//     }
-// }
 function handleTagSelection(chatId, tag) {
     try {
         if (!chatStates[chatId]) {
