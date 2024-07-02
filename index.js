@@ -1,17 +1,16 @@
 const TelegramBot = require('node-telegram-bot-api');
+const { session } = require('telegraf');
 const token = '7035543762:AAGR1qM7bt73_G4Pd4QZUF-lCGZUAB5xmXA';
 const bot = new TelegramBot(token, { polling: true });
 
-let globalTextnewUser;
+bot.use(session());
+
 const chatStates = {};
 let globalData; 
 let globalMediaData = [];
-const adminChatId = '@Sevotonya';
-const waitingForInput = new Map();
-let selectedTags = {}; // Хранение состояния выбранных тегов для каждого пользователя
-let userSelections = {}; // Хранение выбранных опций для каждого пользователя
-let globalselectedTags = [];
-
+const globalState = {
+    allSelectedTags: {}
+};
 
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
@@ -47,8 +46,8 @@ function createAd(chatId) {
     const options = {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'Куплю/Продам', callback_data: '#Куплю/Продам' }, { text: 'Сдам/Сниму', callback_data: '#Сдам/Сниму' }],
-                [{ text: 'Просто вопросик', callback_data: '#Просто вопросик' }, { text: 'Отдам бесплатно', callback_data: '#Отдам бесплатно' }]
+                [{ text: 'Куплю/Продам', callback_data: '#КуплюПродам' }, { text: 'Сдам/Сниму', callback_data: '#СдамСниму' }],
+                [{ text: 'Просто вопросик', callback_data: '#Просто_вопросик' }, { text: 'Отдам бесплатно', callback_data: '#Отдам_бесплатно' }]
             ]
         }
     };
@@ -94,9 +93,7 @@ function createTag(chatId) {
         }
     };
 }
-const globalState = {
-    allSelectedTags: {}
-};
+
 
 function handleTagSelection(chatId, tag) {
     try {
@@ -118,9 +115,11 @@ function handleTagSelection(chatId, tag) {
         } else {
             selectedTags.push(tag); // Добавление тега в список
         }
+        const updatedTags = selectedTags.map(tag => `#${tag}`);
 
+        // Записываем обновленные теги в глобальный объект
+        globalState.allSelectedTags[chatId] = [...updatedTags];
         // Записываем все выбранные теги в глобальный объект
-        globalState.allSelectedTags[chatId] = [...selectedTags];
         console.log("Все выбранные теги для чата", chatId, ":", globalState.allSelectedTags[chatId]);
 
         if (chatStates[chatId].message_id) {
@@ -151,10 +150,10 @@ bot.on('callback_query', (callbackQuery) => {
     }
 
     switch (data) {
-        case '#Куплю/Продам':
-        case '#Сдам/Сниму':
-        case '#Просто вопросик':
-        case '#Отдам бесплатно':
+        case '#КуплюПродам':
+        case '#СдамСниму':
+        case '#Просто_вопросик':
+        case '#Отдам_бесплатно':
             globalData = data;
             chatStates[chatId] = { state: 'awaiting_tag' };
             const fakeMsg = { chat: { id: chatId }, text: "Продолжить" };
@@ -257,7 +256,7 @@ function handleStatefulInput(msg) {
             const mediaGroup = stateData.photos.map((photo, index) => ({
                 type: 'photo',
                 media: photo,
-                caption: index === 0 ? `Описание: ${stateData.description}\nЦена: ${price}\nАвтор: @${msg.from.username} \nОпция: ${globalData} \nТеги: ${tags}` : undefined
+                caption: index === 0 ? `🔥Описание: ${stateData.description}\n \n💡Опция: ${globalData}\n \n💥Теги: ${tags}\n \n💰Цена: ${price}₽\n \n🌟@${msg.from.username}` : undefined
             }));
             bot.sendMediaGroup(chatId, mediaGroup);
             confirmAd(chatId);
