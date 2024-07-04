@@ -52,7 +52,7 @@ class BotState {
                     stateData.userData = text;
                     stateData.state = null; // Сброс состояния после успешной проверки
                     this.bot.sendMessage(chatId, "✨ Спасибо! Ваши данные отправлены на проверку. Пожалуйста, подождите, пока вас проверят и добавят в канал. \n\nПосле добавления у вас станут доступны кнопки: \n📢 /public - публикация объявления \n📝 /create - создание объявления \nℹ️ /help - справка");
-                    this.approveUser(chatId); // Вызов метода approveUser после успешной проверки
+                    this.approveUser(chatId, msg); // Вызов метода для отправки сообщения в канал
                 } else {
                     this.bot.sendMessage(chatId, "Пожалуйста, отправьте корректные данные ФИО и (ваша почта)@sberbank.ru.");
                 }
@@ -85,20 +85,20 @@ class BotState {
             }
         }
     }
-    validationUser(chatId, text) {
-        const stateData = this.chatStates[chatId];
+    // validationUser(chatId, text) {
+    //     const stateData = this.chatStates[chatId];
 
-        if (this.validateFIOandEmail(text)) { 
-            stateData.userData = text;
-            stateData.state = null; // Сброс состояния после успешной проверки
-            console.log(`Valid FIO and email received for chat ${chatId}`);
-            this.bot.sendMessage(chatId, "Спасибо! Ваши данные проверены.");
-            this.approveUser(chatId); // Вызов метода approveUser после успешной проверки
-        } else {
-            console.log(`Invalid FIO and email received for chat ${chatId}`);
-            this.bot.sendMessage(chatId, "Пожалуйста, отправьте корректные данные ФИО и (ваша почта)@sberbank.ru.");
-        }
-    }
+    //     if (this.validateFIOandEmail(text)) { 
+    //         stateData.userData = text;
+    //         stateData.state = null; // Сброс состояния после успешной проверки
+    //         console.log(`Valid FIO and email received for chat ${chatId}`);
+    //         this.bot.sendMessage(chatId, "Спасибо! Ваши данные проверены.");
+    //         this.approveUser(chatId); // Вызов метода approveUser после успешной проверки
+    //     } else {
+    //         console.log(`Invalid FIO and email received for chat ${chatId}`);
+    //         this.bot.sendMessage(chatId, "Пожалуйста, отправьте корректные данные ФИО и (ваша почта)@sberbank.ru.");
+    //     }
+    // }
  
     async isUserInChannel(channelId, userId) {
         try {
@@ -181,21 +181,19 @@ class BotState {
         if (!stateData || !stateData.state) return;
         console.log(`Handling stateful input for chat ${chatId} with state ${stateData.state}`);
         switch (stateData.state) {
-                case 'awaiting_fio_email':
+                // case 'awaiting_fio_email':
                    
-                    console.log("home")
+                //     console.log("home")
 
-                    if (this.validateFIOandEmail(text)) { 
-                        stateData.userData = text;
-                        stateData.state = null; // Сброс состояния после успешной проверки
-                        console.log(`Valid FIO and email received for chat ${chatId}`);
-                        this.bot.sendMessage(chatId, "Спасибо! Ваши данные проверены.");
-                        this.approveUser(chatId); // Вызов метода approveUser после успешной проверки
-                    } else {
-                        console.log(`Invalid FIO and email received for chat ${chatId}`);
-                        this.bot.sendMessage(chatId, "Пожалуйста, отправьте корректные данные ФИО и (ваша почта)@sberbank.ru.");
-                    }
-                    break;
+                //     if (this.validateFIOandEmail(text)) { 
+                //         stateData.userData = text;
+                //         stateData.state = null; // Сброс состояния после успешной проверки
+                //         this.bot.sendMessage(chatId, "Спасибо! Ваши данные проверены.");
+                //         this.approveUser(chatId); // Вызов метода approveUser после успешной проверки
+                //     } else {
+                //         this.bot.sendMessage(chatId, "Пожалуйста, отправьте корректные данные ФИО и (ваша почта)@sberbank.ru.");
+                //     }
+                //     break;
 
             case 'awaiting_tag':
                 if (text === "Продолжить") {
@@ -278,11 +276,12 @@ class BotState {
         bot.sendMessage(chatId, 'Выберите одну из опций:', options);
     }
 
-    approveUser(chatId) {
+    approveUser(chatId, msg) {
         const userData = this.chatStates[chatId].userData;
         if (userData) {
             const channelChatId = '-1002214964299' ; // ID канала для авторизации
-            bot.sendMessage(channelChatId, `Новый сотрудник добавлен: ${userData}`);
+            const userNickname = msg.from.username; // Получаем никнейм пользователя
+            bot.sendMessage(channelChatId, `Желающий вступить в канал🗞: \n${userData} \nИмя пользователя: @${userNickname}`);
         }
     }
 
