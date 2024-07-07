@@ -72,7 +72,7 @@ publishAdScene.enter((ctx) => {
     //     type: 'photo',
     //     media: photo,
     //     caption: index === 0 ? `Описание: ${ad.description}\nЦена: ${ad.const username = ctx.from.username ? \nПользователь: @${ctx.from.username} : '';
-const username = ctx.from.username ? \nПользователь: @${ctx.from.username} : '';
+const username = ctx.from.username ?`\nПользователь: @${ctx.from.username}`: '';
     const media = ctx.session.ad.photos.map((photoId, index) => ({
         type: 'photo',
         media: photoId,
