@@ -71,12 +71,12 @@ publishAdScene.enter((ctx) => {
     // const mediaGroup = ad.photos.map((photo, index) => ({
     //     type: 'photo',
     //     media: photo,
-    //     caption: index === 0 ? `Описание: ${ad.description}\nЦена: ${ad.price}₽` : ''
-    // }));
+    //     caption: index === 0 ? `Описание: ${ad.description}\nЦена: ${ad.const username = ctx.from.username ? \nПользователь: @${ctx.from.username} : '';
+const username = ctx.from.username ? \nПользователь: @${ctx.from.username} : '';
     const media = ctx.session.ad.photos.map((photoId, index) => ({
         type: 'photo',
         media: photoId,
-        caption: index === 0 ? `${ctx.session.ad.description}\nЦена: ${ctx.session.ad.price}\nПользователь: @${ctx.from.username}` : undefined,
+        caption: index === 0 ? `${ctx.session.ad.description}\nЦена: ${ctx.session.ad.price}\nПользователь: @${username}` : undefined,
     }));
     ctx.telegram.sendMediaGroup(ctx.chat.id, media)
         .then(() => {
