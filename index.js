@@ -76,7 +76,7 @@ publishAdScene.enter((ctx) => {
     const media = ctx.session.ad.photos.map((photoId, index) => ({
         type: 'photo',
         media: photoId,
-        caption: index === 0 ? `${ctx.session.ad.description}\nЦена: ${ctx.session.ad.price}` : undefined,
+        caption: index === 0 ? `${ctx.session.ad.description}\nЦена: ${ctx.session.ad.price}\nПользователь: @${ctx.from.username}` : undefined,
     }));
     ctx.telegram.sendMediaGroup(ctx.chat.id, media)
         .then(() => {
