@@ -282,7 +282,7 @@ class BotState {
         for (let i = 0; i < tags.length; i += 4) {
             rows.push(tags.slice(i, i + 4));
         }
-        
+        selectedTags
         return {
             reply_markup: {
                 inline_keyboard: rows.map(row => row.map(tag => ({
