@@ -4,6 +4,31 @@ const token = '7035543762:AAGR1qM7bt73_G4Pd4QZUF-lCGZUAB5xmXA';
 
 const bot = new Telegraf(token);
 
+//Cцена авторизации start
+function validateFIOandEmail(input) {
+    // Регулярное выражение для проверки ФИО и почты, оканчивающейся на @sberbank.ru
+    const regex = /^[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+@sberbank\.ru$/;
+    return regex.test(input);}
+
+const authScene = new BaseScene("auth")
+authScene.enter((ctx) => {
+    ctx.reply('Добрый день, Сберахолка на связи✅! \nДля попадания в канал вы должны быть сотрудником СБЕРа и написать сюда \n⚡️В ОДНОМ СООБЩЕНИИ!⚡️ фамилия, имя, отчество и сберовская почта (ДЗО тоже подходит). \nЕсли вдруг, бот говорит, что вы не то отправляете, подайте заново! Нужно всего одно сообщение с ФИО и почтой!');
+
+})
+authScene.on('text', (ctx) => {
+    const authText = ctx.message.text;
+    const channelChatId = '-1002214964299' ; // ID канала для авторизации
+    if (validateFIOandEmail(authText)){
+ctx.reply("✨ Спасибо! Ваши данные отправлены на проверку. Пожалуйста, подождите, пока вас проверят и добавят в канал. \n\nПосле добавления у вас станут доступны кнопки:\n📝 /create - создание объявления \nℹ️ /help - справка");
+const message = `Желающий вступить в канал🗞: \n${authText} \nИмя пользователя: @${ctx.from.username}`;
+ctx.telegram.sendMessage(channelChatId, message);
+ctx.scene.leave();
+}
+ else {
+   ctx.reply( "Пожалуйста, отправьте корректные данные ФИО и (ваша почта)@sberbank.ru.")
+}
+});
+
 // Сцена для кнопок опций
 const opsciaScene = new BaseScene("opcia")
 opsciaScene.enter((ctx) => {
@@ -470,7 +495,6 @@ publishAdScene.action(['publish', 'edit'], (ctx) => {
             }
             break;
         case 'edit':
-
             ctx.reply('Что хотите изменить🤔?', {
                 reply_markup: {
                     inline_keyboard: [
@@ -520,24 +544,59 @@ publishAdScene.action('photoEdit', (ctx) => {
 });
 
 // Создание и регистрация сцен
-const stage = new Stage([tagSceneEdit, photoUploadSceneEdit, opsciaSceneEdit, priceSceneEdid, photoUploadScene, publishAdScene, priceScene, opsciaScene, tagScene]);
+const stage = new Stage([authScene, tagSceneEdit, photoUploadSceneEdit, opsciaSceneEdit, priceSceneEdid, photoUploadScene, publishAdScene, priceScene, opsciaScene, tagScene]);
 bot.use(session());
 bot.use(stage.middleware());
 
 // Обработка команд
 bot.start((ctx) => {
-    ctx.reply('Добро пожаловать! Введите /create для создания нового объявления.');
+    ctx.scene.enter('auth');
+    
 });
 
-bot.command('create', (ctx) => {
-    ctx.session = {}; // Обнулить сессию
-    selectedTags = {}; // Обнулить теги
-    ctx.scene.enter('opcia');
+const channelChatId = '-1002196162742';
+
+bot.command('create', async (ctx) => {
+    const chatMember = await ctx.telegram.getChatMember(channelChatId, ctx.from.id);
+
+    if (chatMember.status === 'member' || chatMember.status === 'administrator' || chatMember.status === 'creator') {
+        ctx.session = {}; // Обнулить сессию
+        selectedTags = {}; // Обнулить теги
+        ctx.scene.enter('opcia');
+    } else {
+        ctx.reply('Вы не являетесь членом канала😬. Пожалуйста, подождите, пока вас проверят и добавят в канал. \n\nПосле добавления у вас станут доступны кнопки: \n📝 /create - создание объявления \nℹ️ /help - справка');
+    }
 });
 
-bot.command('edit', (ctx) => {
-    ctx.scene.enter('editAd');
+bot.command('help', async (ctx) => {
+    const chatMember = await ctx.telegram.getChatMember(channelChatId, ctx.from.id);
+
+    if (chatMember.status === 'member' || chatMember.status === 'administrator' || chatMember.status === 'creator') {
+        ctx.reply('Привет! 🌟 Для начала создания объявления нажмите кнопку [Создать объявление] или воспользуйтесь командой /create. \nЯ помогу вам заполнить объявление текстом или фото✍️. Помните, что в одном сообщении можно прикрепить не более 10 фото из-за ограничений Телеграма👀. \nПосле того как вы подготовите объявление, вы получите макет объялвения, у вас будет возможность проверить или изменить его. \nЕсли все ок у вас появится кнопка [Опубликовать]. \nЕсли у вас возникнут вопросы или потребуется помощь — обращайтесь🧑‍💻.');
+    } else {
+        ctx.reply('Вы не являетесь членом канала😬. Пожалуйста, подождите, пока вас проверят и добавят в канал. \n\nПосле добавления у вас станут доступны кнопки: \n📝 /create - создание объявления \nℹ️ /help - справка');
+    }
 });
+// bot.command('public', async (ctx) => {
+//     const chatMember = await ctx.telegram.getChatMember(channelChatId, ctx.from.id);
+
+//     if (chatMember.status === 'member' || chatMember.status === 'administrator' || chatMember.status === 'creator') {
+//         const messages = await ctx.telegram.getChatHistory(channelChatId);
+
+//         messages.forEach(async (message) => {
+//             if (message.from.id === ctx.from.id) {
+//                 if (message.text) {
+//                     await ctx.reply(message.text);
+//                 } else if (message.photo) {
+//                     await ctx.replyWithPhoto({ source: message.photo[0].file_id });
+//                 } // Добавьте другие типы сообщений по необходимости
+//             }
+//         });
+
+//     } else {
+//         ctx.reply('Извините, команда /sendPosts недоступна для этого канала.');
+//     }
+// });
 
 // Запуск бота
 bot.launch()
