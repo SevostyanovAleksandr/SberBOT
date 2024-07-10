@@ -183,7 +183,7 @@ tagSceneEdit.on('text', (ctx) => {
     } else {
         ctx.session.ad.description = description;
         // Переходим к сцене ввода цены
-        return ctx.scene.enter('price');
+        return ctx.scene.enter('publishAd');
     }
 })
 
@@ -315,7 +315,7 @@ priceSceneEdid.on('text', (ctx) => {
 
         if (!isNaN(price) && price > 0) {
             ctx.session.ad.price = price;
-            return ctx.scene.enter('photoUpload');
+            return ctx.scene.enter('publishAd');
         } else {
             ctx.reply('Пожалуйста, введите положительное число.');
         }
