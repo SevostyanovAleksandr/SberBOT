@@ -134,10 +134,15 @@ tagScene.enter((ctx) => {
         if (!ctx.session.ad) {
             ctx.session.ad = {};
         }
-
+    
         const selectedTags = Object.keys(tagState).filter(tag => tagState[tag] === true);
-        const description = ctx.message.text;
-
+        let description = ctx.message.text;
+    
+        if (description.length > 760) {
+            ctx.reply('Вы ввели слишком большое количество символов для телеграмма. Пожалуйста, попробуйте еще раз.');
+            return;
+        }
+    
         if (selectedTags.length === 0 || description.trim() === '') {
             ctx.reply('Пожалуйста, выберите теги и введите текст.');
         } else {
@@ -151,10 +156,6 @@ tagScene.enter((ctx) => {
 
 const tagSceneEdit = new BaseScene('tagEdit');
 
-// // Инициализация состояния тегов
-// let tagState = {};
-// let selectedTags = {};
-
 tagSceneEdit.enter((ctx) => {
     const tags = ['Apple', 'Шмотки', 'Ноутбук', 'Фототехника', 'Авто', "Билет", "Детям", 'Животные', 'Мебель', 'Медицина', 'Недвижимость', 'Раритет', 'Ремонт', 'Сертификат', "Спортивное", "Стройка", 'Техника', "Халява", 'Игры', "Электроника"];
    
@@ -164,22 +165,27 @@ tagSceneEdit.enter((ctx) => {
     });
     sendTagMessage(ctx);
 
-    tagSceneEdit.on('text', (ctx) => {
-        if (!ctx.session.ad) {
-            ctx.session.ad = {};
-        }
+tagSceneEdit.on('text', (ctx) => {
+    if (!ctx.session.ad) {
+        ctx.session.ad = {};
+    }
 
-        const selectedTags = Object.keys(tagState).filter(tag => tagState[tag] === true);
-        const description = ctx.message.text;
+    const selectedTags = Object.keys(tagState).filter(tag => tagState[tag] === true);
+    let description = ctx.message.text;
 
-        if (selectedTags.length === 0 || description.trim() === '') {
-            ctx.reply('Пожалуйста, выберите теги и введите текст.');
-        } else {
-            ctx.session.ad.description = description;
-            // Переходим к сцене ввода цены
-            return ctx.scene.enter('publishAd');
-        }
-    })
+    if (description.length > 760) {
+        ctx.reply('Вы ввели слишком большое количество символов для телеграмма. Пожалуйста, попробуйте еще раз.');
+        return;
+    }
+
+    if (selectedTags.length === 0 || description.trim() === '') {
+        ctx.reply('Пожалуйста, выберите теги и введите текст.');
+    } else {
+        ctx.session.ad.description = description;
+        // Переходим к сцене ввода цены
+        return ctx.scene.enter('price');
+    }
+})
 
 });
 // Обработка нажатий на кнопки
@@ -267,46 +273,61 @@ tagScene.action(/tag_(.+)/, async (ctx) => {
 // Сцена для ввода цены
 const priceScene = new BaseScene('price');
 priceScene.enter((ctx) => {
-    ctx.reply('Введите цену вашего объявления:');
+    ctx.reply('Введите цену вашего товара или услуги(число)💰:');
 });
-priceScene.on('text', (ctx) => {
-    const price = parseFloat(ctx.message.text);
+// priceScene.on('text', (ctx) => {
+//     const price = parseFloat(ctx.message.text);
 
-    if (!isNaN(price)) {
-        ctx.session.ad.price = price;
-        return ctx.scene.enter('photoUpload');
+//     if (!isNaN(price) && price > 0) {
+//         ctx.session.ad.price = price;
+//         return ctx.scene.enter('photoUpload');
+//     } else {
+//         ctx.reply('Пожалуйста, введите число.');
+//     }
+// });
+priceScene.on('text', (ctx) => {
+    const priceInput = ctx.message.text.trim();
+
+    if (priceInput.length <= 15) {
+        const price = parseFloat(priceInput);
+
+        if (!isNaN(price) && price > 0) {
+            ctx.session.ad.price = price;
+            return ctx.scene.enter('photoUpload');
+        } else {
+            ctx.reply('Пожалуйста, введите положительное число.');
+        }
     } else {
-        ctx.reply('Пожалуйста, введите число.');
+        ctx.reply('Превышено допустимое количество символов. Пожалуйста, введите цену до 10 символов.');
     }
 });
 
 // Сцена для ввода цены
 const priceSceneEdid = new BaseScene('priceEdit');
 priceSceneEdid.enter((ctx) => {
-    ctx.reply('Вы выбрали редактирование цены. Введите цену вашего объявления или услуги:');
+    ctx.reply('Вы выбрали редактирование цены.\nВведите цену вашего товара или услуги(число)💰:');
 });
 priceSceneEdid.on('text', (ctx) => {
-    const price = parseFloat(ctx.message.text);
+    const priceInput = ctx.message.text.trim();
 
-    if (!isNaN(price)) {
-        ctx.session.ad.price = price;
-        return ctx.scene.enter('publishAd');
+    if (priceInput.length <= 15) {
+        const price = parseFloat(priceInput);
+
+        if (!isNaN(price) && price > 0) {
+            ctx.session.ad.price = price;
+            return ctx.scene.enter('photoUpload');
+        } else {
+            ctx.reply('Пожалуйста, введите положительное число.');
+        }
     } else {
-        ctx.reply('Пожалуйста, введите число.');
+        ctx.reply('Превышено допустимое количество символов. Пожалуйста, введите цену до 10 символов.');
     }
 });
-
-priceSceneEdid.on('message', (ctx) => {
-    ctx.reply('Пожалуйста, введите число.');
-});
-
-
-
 // // Сцена для загрузки фотографий
 const photoUploadScene = new BaseScene('photoUpload');
 
 photoUploadScene.enter((ctx) => {
-    ctx.reply('Отправьте фотографии для вашего объявления (максимум 10) и готово:');
+    ctx.reply('Теперь отправьте фото📸 (до 10 штук). Отправьте "Готово", когда закончите✔️:');
 });
 
 photoUploadScene.on('photo', (ctx) => {
@@ -348,7 +369,7 @@ photoUploadSceneEdit.enter((ctx) => {
         isFirstEntry = false; // После первого входа меняем значение флага
     }
 
-    ctx.reply('Вы выбрали редактирование фото. Отправьте фотографии для вашего объявления (максимум 10) и готово:');
+    ctx.reply('Вы выбрали редактирование фото. Теперь отправьте фото📸 (до 10 штук). Отправьте "Готово", когда закончите✔️:');
 })
 
 photoUploadSceneEdit.on('photo', (ctx) => {
@@ -412,7 +433,7 @@ publishAdScene.enter((ctx) => {
             })
             .catch((error) => {
                 console.error('Ошибка при отправке медиа-группы:', error);
-                ctx.reply('Произошла ошибка при создании объявления.');
+                ctx.reply('Произошла ошибка при создании объявления❗\nВидимо вы пытались отправить более чем 10 фотографий, пробуйте заново создать объявление /create.');
             });
 
     } else {
@@ -436,9 +457,8 @@ publishAdScene.enter((ctx) => {
             })
             .catch((error) => {
                 console.error('Ошибка при отправке медиа-группы:', error);
-                ctx.reply('Произошла ошибка при создании объявления.');
+                ctx.reply('Произошла ошибка при создании объявления❗\nВидимо вы пытались отправить более чем 10 фотографий, пробуйте заново создать объявление /create.');
             });
-
     }
 })
 
@@ -476,7 +496,7 @@ publishAdScene.action(['publish', 'edit'], (ctx) => {
 
                     } catch (error) {
                         console.error('Ошибка при отправке сообщения в канал:', error);
-                        ctx.reply('Произошла ошибка при публикации объявления.');
+                        ctx.reply('Произошла ошибка при публикации объявления❗');
                     }
 
                 } else {
@@ -489,12 +509,13 @@ publishAdScene.action(['publish', 'edit'], (ctx) => {
 
                     } catch (error) {
                         console.error('Ошибка при отправке сообщения в канал:', error);
-                        ctx.reply('Произошла ошибка при публикации объявления.');
+                        ctx.reply('Произошла ошибка при публикации объявления❗');
                     }
                 }
             }
             break;
         case 'edit':
+            ctx.editMessageReplyMarkup(); 
             ctx.reply('Что хотите изменить🤔?', {
                 reply_markup: {
                     inline_keyboard: [

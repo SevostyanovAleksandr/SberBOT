@@ -227,7 +227,7 @@ class BotState {
                 })
                 .catch(error => {
                     console.error('Ошибка при отправке медиа-группы:', error);
-                    bot.sendMessage(chatId, 'Произошла ошибка при создании объявления.');
+                    bot.sendMessage(chatId, 'Произошла ошибка при создании объявления❗');
                 });
      } else {
             bot.sendMessage(chatId, 'Пожалуйста, введите корректное числовое значение для цены❗️.');
