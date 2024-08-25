@@ -1,6 +1,6 @@
 const {Telegraf,Scenes,session,Markup} = require('telegraf');
 const {BaseScene,Stage} = Scenes;
-const token = '7035543762:AAGR1qM7bt73_G4Pd4QZUF-lCGZUAB5xmXA';
+const token = 'TOKEN';
 
 const bot = new Telegraf(token);
 
